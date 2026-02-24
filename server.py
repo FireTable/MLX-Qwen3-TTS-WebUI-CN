@@ -145,7 +145,7 @@ class CustomVoiceRequest(BaseModel):
     text: str
     language: str = "Auto"
     speaker: str = "Vivian"
-    instruct: str = ""
+    instruct: Optional[str] = None
     speed: float = 1.0
     response_format: str = "base64"
 
