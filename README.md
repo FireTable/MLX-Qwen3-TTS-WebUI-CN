@@ -4,6 +4,10 @@
 
 Forked from [Blizaine qwen3-tts-apple-silicon](https://github.com/Blizaine/qwen3-tts-apple-silicon/tree/main) I didn't fork it at first and did git clone the testing locally, so I just went along with it.
 
+![screenshot](screenshot_1.5x_postspark_En.png)
+
+![screenshot](screenshot_1.5x_postspark.png)
+
 ## 平台要求
 
 - **操作系统**: macOS only (Apple Silicon M1/M2/M3/M4)
