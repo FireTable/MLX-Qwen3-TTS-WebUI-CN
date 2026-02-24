@@ -1993,27 +1993,22 @@ function renderConversationSpeakers() {
             const textEl = card.querySelector('.speaker-text');
             const languageEl = card.querySelector('.speaker-language');
 
-            // Save voice_source from radio selection
+            // Save voice_source, text, language from DOM
             if (voiceSourceEl) state.conversationSpeakers[index].voice_source = voiceSourceEl.value;
             if (textEl) state.conversationSpeakers[index].text = textEl.value;
             if (languageEl) state.conversationSpeakers[index].language = languageEl.value;
 
-            // Only save prompt_id when saved_voice panel is active AND a value is selected
-            const savedVoicePanel = card.querySelector('.saved-voice-panel');
-            const isSavedVoiceActive = savedVoicePanel && savedVoicePanel.style.display !== 'none';
-            if (isSavedVoiceActive) {
-                const promptIdEl = card.querySelector('.speaker-prompt-id:checked');
-                if (promptIdEl && promptIdEl.value) {
-                    state.conversationSpeakers[index].prompt_id = promptIdEl.value;
-                }
-            }
-
-            // Only save instruct when voice_design panel is active
+            // Save instruct only when voice_design panel is active
             const voiceDesignPanel = card.querySelector('.voice-design-panel');
             const isVoiceDesignActive = voiceDesignPanel && voiceDesignPanel.style.display !== 'none';
             if (isVoiceDesignActive && instructEl) {
                 state.conversationSpeakers[index].instruct = instructEl.value;
             }
+
+            // Note: prompt_id is NOT saved from DOM here because:
+            // 1. It's saved immediately in the change event handler when user selects a voice
+            // 2. Re-rendering can cause radio buttons to lose selection temporarily
+            // 3. We preserve the state value by not overwriting it during re-render
         }
     });
 
@@ -2789,10 +2784,11 @@ async function fetchSavedPrompts() {
         });
         if (response.ok) {
             const data = await response.json();
+            // Map to consistent structure with prompt_id (same as loadSavedPrompts)
             state.savedPrompts = (data.prompts || []).map(p => ({
-                id: p.prompt_id,
+                prompt_id: p.prompt_id,
                 name: p.name || null,
-                refText: p.ref_text || '',
+                ref_text: p.ref_text || '',
             }));
         }
     } catch (e) {
@@ -2813,15 +2809,15 @@ function renderSavedPrompts() {
     dropdown.innerHTML = '<option value="">-- Select a saved voice --</option>';
 
     state.savedPrompts.forEach(p => {
-        const label = p.name || (p.refText ? p.refText.slice(0, 50) : 'Voice ' + p.id.slice(0, 8));
+        const label = p.name || (p.ref_text ? p.ref_text.slice(0, 50) : 'Voice ' + p.prompt_id.slice(0, 8));
         const opt = document.createElement('option');
-        opt.value = p.id;
+        opt.value = p.prompt_id;
         opt.textContent = label;
         dropdown.appendChild(opt);
     });
 
     // Restore selection if still valid
-    if (currentVal && state.savedPrompts.some(p => p.id === currentVal)) {
+    if (currentVal && state.savedPrompts.some(p => p.prompt_id === currentVal)) {
         dropdown.value = currentVal;
     } else {
         dropdown.value = '';
@@ -2866,7 +2862,7 @@ async function deletePrompt(id) {
             headers: getHeaders(null)
         });
         if (response.ok) {
-            state.savedPrompts = state.savedPrompts.filter(p => p.id !== id);
+            state.savedPrompts = state.savedPrompts.filter(p => p.prompt_id !== id);
             if (state.selectedPromptId === id) {
                 state.selectedPromptId = null;
             }
@@ -3454,6 +3450,8 @@ function initConversationTab() {
             // Saved voice card selection
             if (e.target.classList.contains('speaker-prompt-id')) {
                 const card = e.target.closest('.conversation-speaker-card');
+
+                // Remove selected class from other voice cards WITHIN THE SAME CARD ONLY
                 const voiceCards = card.querySelectorAll('.saved-voice-card');
                 voiceCards.forEach(vc => vc.classList.remove('selected'));
                 if (e.target.checked) {
