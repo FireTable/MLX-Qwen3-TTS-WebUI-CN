@@ -708,7 +708,39 @@ audio {
 
 /* Custom audio styling */
 audio::-webkit-media-controls-panel {
-    background: var(--bg-card);
+    background: linear-gradient(180deg, #f0f0f5 0%, #d0d0d8 100%);
+}
+
+audio::-webkit-media-controls-play-button,
+audio::-webkit-media-controls-current-time-display,
+audio::-webkit-media-controls-time-remaining-display,
+audio::-webkit-media-controls-seek-slider,
+audio::-webkit-media-controls-volume-slider,
+audio::-webkit-media-controls-mute-button,
+audio::-webkit-media-controls-fullscreen-button {
+    filter: none;
+}
+
+audio::-webkit-media-controls-seek-slider {
+    height: 6px;
+}
+
+audio::-webkit-media-controls-seek-slider::-webkit-slider-thumb {
+    background: var(--accent-cyan);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+audio::-webkit-media-controls-volume-slider {
+    height: 4px;
+}
+
+audio::-webkit-media-controls-volume-slider::-webkit-slider-thumb {
+    background: var(--accent-cyan);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
 }
 
 /* Performance Metrics */
