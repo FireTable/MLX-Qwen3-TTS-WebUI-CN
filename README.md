@@ -2,7 +2,7 @@
 
 基于 Apple MLX 框架的多模态文本转语音（TTS）合成工作区。支持自定义语音、语音设计、语音克隆和**多人对话**四种模式。
 
-Forked from [Blizaine qwen3-tts-apple-silicon](https://github.com/Blizaine/qwen3-tts-apple-silicon/tree/main)
+Forked from [Blizaine qwen3-tts-apple-silicon](https://github.com/Blizaine/qwen3-tts-apple-silicon/tree/main) I didn't fork it at first and did git clone the testing locally, so I just went along with it.
 
 ## 平台要求
 
@@ -26,20 +26,21 @@ python test/hg-download.py
 python server.py
 # 访问：http://localhost:7860/demo
 
-# 方式 2: Gradio Web UI - 5 标签页界面
+# 方式 2: Gradio Web UI - 5 标签页界面 (原项目自带)
 python webui.py --port 7860
 
-# 方式 3: CLI 交互式命令行
+# 方式 3: CLI 交互式命令行 (原项目自带)
 python main.py
 ```
 
-## 三种工作模式
+## 四种工作模式
 
-| 模式             | 功能                  | 入口                                          |
-| ---------------- | --------------------- | --------------------------------------------- |
-| **Custom Voice** | 预设说话人 + 情感控制 | `CustomVoice` 标签页 / `/api/v1/custom-voice` |
-| **Voice Design** | 自然语言描述生成语音  | `VoiceDesign` 标签页 / `/api/v1/voice-design` |
-| **Voice Clone**  | 从参考音频克隆语音    | `VoiceClone` 标签页 / `/api/v1/base/clone`    |
+| 模式                          | 功能                  | 入口                                           |
+| ----------------------------- | --------------------- | ---------------------------------------------- |
+| **Custom Voice**              | 预设说话人 + 情感控制 | `CustomVoice` 标签页 / `/api/v1/custom-voice`  |
+| **Voice Design**              | 自然语言描述生成语音  | `VoiceDesign` 标签页 / `/api/v1/voice-design`  |
+| **Voice Clone**               | 从参考音频克隆语音    | `VoiceClone` 标签页 / `/api/v1/base/clone`     |
+| **Multi-Person Conversation** | 多人对话              | `Conversation` 标签页 / `/api/v1/conversation` |
 
 ---
 
