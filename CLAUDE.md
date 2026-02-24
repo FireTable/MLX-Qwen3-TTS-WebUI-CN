@@ -38,36 +38,36 @@ This is a text-to-speech synthesis workspace using Apple's MLX framework with th
 
 ### Three Modes
 
-| Mode | Purpose | Entry Point |
-|------|---------|-------------|
-| **Custom Voice** | Preset speakers + emotion control | `CustomVoice` tab / `/api/v1/custom-voice` |
+| Mode             | Purpose                             | Entry Point                                |
+| ---------------- | ----------------------------------- | ------------------------------------------ |
+| **Custom Voice** | Preset speakers + emotion control   | `CustomVoice` tab / `/api/v1/custom-voice` |
 | **Voice Design** | Natural language voice descriptions | `VoiceDesign` tab / `/api/v1/voice-design` |
-| **Voice Clone** | Clone from reference audio | `VoiceClone` tab / `/api/v1/base/clone` |
+| **Voice Clone**  | Clone from reference audio          | `VoiceClone` tab / `/api/v1/base/clone`    |
 
 ### Models
 
-| Model | Purpose | Key Method |
-|-------|---------|------------|
-| **Chatterbox-Turbo-FP16** | Expressive storytelling + voice cloning | `generate(text, ref_audio)` |
-| **Qwen3-TTS-12Hz-1.7B-Base-bf16** | Production TTS with predefined voices | `generate(text, voice, language)` |
-| **Qwen3-TTS-12Hz-1.7B-CustomVoice-bf16** | Emotion-controlled speech | `generate_custom_voice(text, speaker, language, instruct)` |
-| **Qwen3-TTS-12Hz-1.7B-VoiceDesign-bf16** | Custom voice from description | `generate_voice_design(text, language, instruct)` |
+| Model                                    | Purpose                                 | Key Method                                                 |
+| ---------------------------------------- | --------------------------------------- | ---------------------------------------------------------- |
+| **Chatterbox-Turbo-FP16**                | Expressive storytelling + voice cloning | `generate(text, ref_audio)`                                |
+| **Qwen3-TTS-12Hz-1.7B-Base-bf16**        | Production TTS with predefined voices   | `generate(text, voice, language)`                          |
+| **Qwen3-TTS-12Hz-1.7B-CustomVoice-bf16** | Emotion-controlled speech               | `generate_custom_voice(text, speaker, language, instruct)` |
+| **Qwen3-TTS-12Hz-1.7B-VoiceDesign-bf16** | Custom voice from description           | `generate_voice_design(text, language, instruct)`          |
 
 ### Model Variants
 
-| Variant | Size | RAM Usage | Quality |
-|---------|------|-----------|---------|
-| **Pro (1.7B)** | ~5-6GB | Best quality, slower |
+| Variant         | Size   | RAM Usage            | Quality |
+| --------------- | ------ | -------------------- | ------- |
+| **Pro (1.7B)**  | ~5-6GB | Best quality, slower |
 | **Lite (0.6B)** | ~2-3GB | Faster, good quality |
 
 ### Speakers by Language
 
-| Language | Speakers |
-|----------|----------|
-| **English** | Ryan, Aiden, Ethan, Chelsie, Serena, Vivian |
-| **Chinese** | Vivian, Serena, Uncle_Fu, Dylan, Eric |
-| **Japanese** | Ono_Anna |
-| **Korean** | Sohee |
+| Language     | Speakers                                    |
+| ------------ | ------------------------------------------- |
+| **English**  | Ryan, Aiden, Ethan, Chelsie, Serena, Vivian |
+| **Chinese**  | Vivian, Serena, Uncle_Fu, Dylan, Eric       |
+| **Japanese** | Ono_Anna                                    |
+| **Korean**   | Sohee                                       |
 
 ### Data Flow
 
@@ -88,6 +88,7 @@ All models are stored in the `models/` directory:
 ## API Reference
 
 ### Custom Voice Endpoints
+
 ```
 POST /api/v1/custom-voice/generate    # Generate speech with speaker + emotion
 GET  /api/v1/speakers                 # List available speakers
@@ -95,17 +96,20 @@ GET  /api/v1/languages                # List available languages
 ```
 
 ### Voice Design Endpoints
+
 ```
 POST /api/v1/voice-design/generate    # Generate voice from description
 ```
 
 ### Voice Clone Endpoints
+
 ```
 POST /api/v1/base/clone               # Clone voice from reference audio
 POST /api/v1/base/clone/stream        # Stream cloned voice output
 ```
 
 ### Voice Prompt Endpoints
+
 ```
 POST /api/v1/base/create-prompt       # Create voice prompt
 POST /api/v1/base/generate-with-prompt # Generate with existing prompt
@@ -114,6 +118,7 @@ DELETE /api/v1/prompts/{id}           # Delete prompt
 ```
 
 ### Utility Endpoints
+
 ```
 POST /api/v1/base/transcribe          # Speech-to-text transcription
 GET  /api/v1/health                   # Health check
@@ -125,6 +130,7 @@ GET  /                                # Redirects to /demo
 ### Static Web Demo
 
 The `static/` folder contains a production-ready web interface:
+
 - **Location**: `http://localhost:7860/demo` (when running `server.py`)
 - **Features**: 3 tabs (Custom Voice, Voice Design, Voice Clone) + Settings
 - **Files**: `index.html`, `styles.css`, `app.js`
@@ -162,6 +168,7 @@ mlx_test/
 ```
 
 **Note:**
+
 - All models are now consolidated in `models/` (Chatterbox moved from project root)
 - Output paths: `output/` (legacy test scripts) vs `outputs/{mode}/` (new scripts)
 
@@ -184,24 +191,29 @@ mlx_test/
 ## Dependencies
 
 ### Core
+
 - `mlx-audio` - TTS model interface
 - `soundfile` - WAV I/O
 - `numpy` - Audio array handling
 - `huggingface_hub` - Model downloads
 
 ### Web UI (Gradio)
+
 - `gradio` - Web UI (webui.py)
 
 ### API Server (FastAPI)
+
 - `fastapi` - REST API (server.py)
 - `uvicorn` - ASGI server (server.py)
 - `librosa` - Audio format conversion (optional, for MP3/M4A support)
 
 ### Optional
+
 - `mlx-whisper` - Speech-to-text transcription (for auto-transcribing reference audio)
   - Install: `pip install mlx-whisper`
 
 ### Test Scripts
+
 - `argparse` - CLI argument parsing
 
 ## Platform Requirements
@@ -212,6 +224,7 @@ mlx_test/
 ## Git Configuration
 
 A `.gitignore` file is included to exclude:
+
 - **Generated outputs**: `outputs/`, `output/`, `voices/`, `voice_ref/`
 - **Models**: `models/` (large files, download separately via `test/hg-download.py`)
 - **Python artifacts**: `__pycache__/`, `*.pyc`, `*.egg-info/`
@@ -222,17 +235,59 @@ A `.gitignore` file is included to exclude:
 ## Project Status
 
 ### Latest Updates
+
 - **All models consolidated** in `models/` directory
 - **Model paths fixed** in all entry points (webui.py, server.py, main.py, test scripts)
 - **Chatterbox-Turbo-FP16** moved from project root to `models/`
 - **Static web demo** available at `/demo` when running server.py
 
 ### Entry Points Status
-| File | Status | Model Paths |
-|------|--------|-------------|
-| `webui.py` | Fixed | `models/Qwen3-TTS-*` |
-| `server.py` | Working | `models/Qwen3-TTS-*` |
-| `main.py` | Fixed | `models/Qwen3-TTS-*` |
-| `test/qwen3tts.py` | Fixed | `models/Qwen3-TTS-*` |
-| `test/chatterbox.py` | Fixed | `models/Chatterbox-Turbo-FP16` |
-| `test/hg-download.py` | Fixed | Downloads to `models/` |
+
+| File                  | Status  | Model Paths                    |
+| --------------------- | ------- | ------------------------------ |
+| `webui.py`            | Fixed   | `models/Qwen3-TTS-*`           |
+| `server.py`           | Working | `models/Qwen3-TTS-*`           |
+| `main.py`             | Fixed   | `models/Qwen3-TTS-*`           |
+| `test/qwen3tts.py`    | Fixed   | `models/Qwen3-TTS-*`           |
+| `test/chatterbox.py`  | Fixed   | `models/Chatterbox-Turbo-FP16` |
+| `test/hg-download.py` | Fixed   | Downloads to `models/`         |
+
+## Reference Document
+
+[Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS)
+
+```
+import torch
+import soundfile as sf
+from qwen_tts import Qwen3TTSModel
+
+model = Qwen3TTSModel.from_pretrained(
+    "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+    device_map="cuda:0",
+    dtype=torch.bfloat16,
+    attn_implementation="flash_attention_2",
+)
+
+# single inference
+wavs, sr = model.generate_voice_design(
+    text="哥哥，你回来啦，人家等了你好久好久了，要抱抱！",
+    language="Chinese",
+    instruct="体现撒娇稚嫩的萝莉女声，音调偏高且起伏明显，营造出黏人、做作又刻意卖萌的听觉效果。",
+)
+sf.write("output_voice_design.wav", wavs[0], sr)
+
+# batch inference
+wavs, sr = model.generate_voice_design(
+    text=[
+      "哥哥，你回来啦，人家等了你好久好久了，要抱抱！",
+      "It's in the top drawer... wait, it's empty? No way, that's impossible! I'm sure I put it there!"
+    ],
+    language=["Chinese", "English"],
+    instruct=[
+      "体现撒娇稚嫩的萝莉女声，音调偏高且起伏明显，营造出黏人、做作又刻意卖萌的听觉效果。",
+      "Speak in an incredulous tone, but with a hint of panic beginning to creep into your voice."
+    ]
+)
+sf.write("output_voice_design_1.wav", wavs[0], sr)
+sf.write("output_voice_design_2.wav", wavs[1], sr)
+```

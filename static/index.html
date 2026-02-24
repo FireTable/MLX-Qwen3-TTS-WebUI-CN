@@ -50,6 +50,9 @@
                 <button class="tab-btn" data-tab="voice-clone" role="tab" aria-selected="false" data-i18n="voiceClone">
                     Voice Clone
                 </button>
+                <button class="tab-btn" data-tab="conversation" role="tab" aria-selected="false" data-i18n="conversation">
+                    Multi-Person Conversation
+                </button>
                 <button class="tab-btn" data-tab="settings" role="tab" aria-selected="false" data-i18n="settings">
                     Settings
                 </button>
@@ -555,6 +558,57 @@
                                     <span class="metric-value" id="vc-metric-cache">--</span>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==================== MULTI-PERSON CONVERSATION TAB ==================== -->
+            <section class="tab-panel" id="panel-conversation" role="tabpanel">
+                <div class="section-header">
+                    <h1 class="section-title" data-i18n="convSectionTitle">Multi-Person Conversation</h1>
+                    <p class="section-description" data-i18n="convSectionDesc">Create dialogues with multiple speakers using batch inference</p>
+                </div>
+
+                <!-- Speakers Container -->
+                <div class="speakers-container" id="conv-speakers-container">
+                    <!-- Dynamically added speaker cards -->
+                </div>
+
+                <!-- Add Speaker Button -->
+                <button class="btn btn-secondary" id="conv-add-speaker-btn" data-i18n="addSpeakerBtn">
+                    + Add Speaker (2/5)
+                </button>
+
+                <!-- Global Settings -->
+                <div class="form-group">
+                    <label class="form-label" for="conv-speed" data-i18n="speed">Speed</label>
+                    <div class="range-container">
+                        <span class="range-value">0.5x</span>
+                        <input type="range" class="range-slider" id="conv-speed" min="0.5" max="2" step="0.1" value="1">
+                        <span class="range-value" id="conv-speed-value">1.0x</span>
+                    </div>
+                </div>
+
+                <!-- Generate Button -->
+                <button class="btn btn-primary" id="conv-generate-btn" data-i18n="generateConversationBtn">
+                    <span>▶</span> Generate Conversation
+                </button>
+
+                <!-- Audio Player -->
+                <div class="audio-player-container" id="conv-audio-container">
+                    <div class="conversation-timeline" id="conv-timeline">
+                        <!-- Timeline segments for each speaker -->
+                    </div>
+                    <audio controls id="conv-audio-player"></audio>
+                    <div class="performance-metrics" id="conv-metrics">
+                        <div class="metric">
+                            <span class="metric-label" data-i18n="genTime">Generation Time</span>
+                            <span class="metric-value" id="conv-metric-time">--</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label" data-i18n="duration">Total Duration</span>
+                            <span class="metric-value" id="conv-metric-duration">--</span>
                         </div>
                     </div>
                 </div>

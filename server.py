@@ -189,6 +189,33 @@ class LanguagesResponse(BaseModel):
     languages: List[str]
 
 
+# ============= Conversation TTS Models =============
+
+class ConversationSpeaker(BaseModel):
+    text: str
+    instruct: str
+    language: Optional[str] = "Auto"
+
+
+class ConversationGenerateRequest(BaseModel):
+    speakers: List[ConversationSpeaker]
+    speed: float = 1.0
+    response_format: str = "base64"
+
+
+class ConversationAudioSegment(BaseModel):
+    speaker_index: int
+    audio: str
+    sample_rate: int
+    duration: float
+
+
+class ConversationGenerateResponse(BaseModel):
+    segments: List[ConversationAudioSegment]
+    total_duration: float
+    format: str = "wav"
+
+
 # Speaker information (matching Mac01)
 SPEAKERS = [
     SpeakerInfo(name="Vivian", description="Bright, slightly edgy young female voice", native_language="Chinese"),
@@ -426,6 +453,49 @@ async def generate_voice_design(request: VoiceDesignRequest):
 
     except Exception as e:
         logger.error(f"Error generating voice design: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============= Conversation TTS Endpoints =============
+
+@app.post("/api/v1/conversation/generate")
+async def generate_conversation(request: ConversationGenerateRequest):
+    """Generate multi-person conversation using batch inference."""
+    try:
+        logger.info(f"Generating conversation with {len(request.speakers)} speakers")
+
+        model = get_available_model("voice_design")
+
+        # Generate each speaker's audio segment
+        segments = []
+        total_duration = 0
+        sr = None
+
+        for i, speaker in enumerate(request.speakers):
+            # Generate audio for this speaker
+            audio_data, sr = generate_with_temp_dir(
+                model,
+                text=speaker.text,
+                instruct=speaker.instruct,
+            )
+
+            duration = len(audio_data) / sr
+            segments.append(ConversationAudioSegment(
+                speaker_index=i,
+                audio=numpy_to_base64(audio_data, sr),
+                sample_rate=sr,
+                duration=duration
+            ))
+            total_duration += duration
+
+        return ConversationGenerateResponse(
+            segments=segments,
+            total_duration=total_duration,
+            format="wav"
+        )
+
+    except Exception as e:
+        logger.error(f"Error generating conversation: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1066,7 +1136,7 @@ async def models_status():
     for key, folder in MODEL_PATHS.items():
         path = get_model_path(folder)
         status[key] = "available" if path else "not_found"
-    return {"models": status}
+    return {"models": status, "conversation": "available" if get_model_path(MODEL_PATHS.get("voice_design_lite") or MODEL_PATHS.get("voice_design_pro")) else "not_found"}
 
 
 @app.get("/demo")

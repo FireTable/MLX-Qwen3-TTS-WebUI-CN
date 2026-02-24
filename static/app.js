@@ -19,6 +19,9 @@ const CONFIG = {
         voiceDesign: {
             generate: '/api/v1/voice-design/generate'
         },
+        conversation: {
+            generate: '/api/v1/conversation/generate'
+        },
         base: {
             clone: '/api/v1/base/clone',
             cloneStream: '/api/v1/base/clone/stream',
@@ -252,6 +255,85 @@ const API_DOCS = {
             }
         ]
     },
+    'conversation': {
+        title: 'Multi-Person Conversation API',
+        description: 'Create multi-speaker conversations using batch inference. Define each speaker\'s voice characteristics and text separately, and the API will generate all audio segments that can be played sequentially.',
+        endpoint: {
+            method: 'POST',
+            path: '/api/v1/conversation/generate'
+        },
+        docsAnchor: '#/conversation/generate_conversation_api_v1_conversation_generate_post',
+        requestHeaders: [
+            { name: 'Content-Type', value: 'application/json', description: 'Request body format' },
+            { name: 'X-API-Key', value: 'your-api-key', description: 'API authentication key' }
+        ],
+        requestParams: [
+            { name: 'speakers', type: 'array', required: true, description: 'Array of speaker objects (minimum 2, maximum 5)' },
+            { name: 'speakers[].text', type: 'string', required: true, description: 'Text for this speaker to say' },
+            { name: 'speakers[].instruct', type: 'string', required: true, description: 'Voice description for this speaker (e.g., "A warm, friendly female voice")' },
+            { name: 'speakers[].language', type: 'string', required: false, description: 'Language code or "Auto" (default: "Auto")' },
+            { name: 'speed', type: 'number', required: false, description: 'Speech speed (0.5 to 2.0, default: 1.0)' },
+            { name: 'response_format', type: 'string', required: false, description: 'Audio format ("base64" or "float", default: "base64")' }
+        ],
+        requestExample: {
+            speakers: [
+                {
+                    text: 'Hello! Welcome to our conversation demo.',
+                    instruct: 'A warm, friendly male voice with a casual tone',
+                    language: 'English'
+                },
+                {
+                    text: 'Hi there! This is amazing technology.',
+                    instruct: 'A cheerful, energetic female voice with enthusiasm',
+                    language: 'English'
+                }
+            ],
+            speed: 1.0,
+            response_format: 'base64'
+        },
+        responseExample: {
+            segments: [
+                {
+                    speaker_index: 0,
+                    audio: '<base64_encoded_audio_data>',
+                    sample_rate: 24000,
+                    duration: 3.5
+                },
+                {
+                    speaker_index: 1,
+                    audio: '<base64_encoded_audio_data>',
+                    sample_rate: 24000,
+                    duration: 2.8
+                }
+            ],
+            total_duration: 6.3,
+            format: 'wav'
+        },
+        responseHeaders: [
+            { name: 'X-Total-Duration', description: 'Total duration of all segments combined in seconds' },
+            { name: 'X-Speaker-Count', description: 'Number of speaker segments generated' },
+            { name: 'X-Generation-Time', description: 'Time taken to generate all segments in seconds' }
+        ],
+        curlExample: `curl -X POST "{{baseUrl}}/api/v1/conversation/generate" \\
+  -H "Content-Type: application/json" \\
+  -H "X-API-Key: your-api-key" \\
+  -d '{
+    "speakers": [
+      {
+        "text": "Hello! Welcome to the demo.",
+        "instruct": "A warm, friendly male voice",
+        "language": "English"
+      },
+      {
+        "text": "Hi there! Nice to meet you.",
+        "instruct": "A cheerful female voice",
+        "language": "English"
+      }
+    ],
+    "speed": 1.0,
+    "response_format": "base64"
+  }'`
+    },
     'settings': {
         title: 'Health & Cache APIs',
         description: 'Monitor server health, model status, and manage the voice prompt cache.',
@@ -484,7 +566,35 @@ const i18n = {
         noApiKey: 'Please set your API key in Settings',
         noVoiceDesc: 'Please enter a voice description',
         noRefAudio: 'Please upload reference audio or select a saved prompt',
-        noRefText: 'Please enter the reference text or enable X-Vector Only mode'
+        noRefText: 'Please enter the reference text or enable X-Vector Only mode',
+        // Conversation
+        conversation: 'Multi-Person Conversation',
+        convSectionTitle: 'Multi-Person Conversation',
+        convSectionDesc: 'Create dialogues with multiple speakers using batch inference',
+        addSpeakerBtn: '+ Add Speaker',
+        generateConversationBtn: 'Generate Conversation',
+        speakerNumber: 'Speaker',
+        voiceDescription: 'Voice Description',
+        voiceDescInstructPlaceholder: 'e.g., A warm, professional female voice...',
+        textToSpeak: 'Text to Speak',
+        textPlaceholder: 'Enter what this speaker says...',
+        language: 'Language',
+        autoDetect: 'Auto Detect',
+        langChinese: 'Chinese',
+        langEnglish: 'English',
+        langJapanese: 'Japanese',
+        langKorean: 'Korean',
+        langGerman: 'German',
+        langFrench: 'French',
+        langRussian: 'Russian',
+        langPortuguese: 'Portuguese',
+        langSpanish: 'Spanish',
+        langItalian: 'Italian',
+        speed: 'Speed',
+        genTime: 'Generation Time',
+        duration: 'Total Duration',
+        conversationAudio: 'Conversation Audio',
+        timelineClickSegment: 'Click a segment to jump to that speaker'
     },
     'zh-cn': {
         // Header
@@ -637,7 +747,35 @@ const i18n = {
         noApiKey: '请在设置中设置 API 密钥',
         noVoiceDesc: '请输入语音描述',
         noRefAudio: '请上传参考音频或选择已保存的提示',
-        noRefText: '请输入参考文本或启用仅 X 向量模式'
+        noRefText: '请输入参考文本或启用仅 X 向量模式',
+        // Conversation
+        conversation: '多人对话',
+        convSectionTitle: '多人对话',
+        convSectionDesc: '使用批量推理创建多人对话',
+        addSpeakerBtn: '+ 添加说话者',
+        generateConversationBtn: '生成对话',
+        speakerNumber: '说话者',
+        voiceDescription: '声音描述',
+        voiceDescInstructPlaceholder: '例如：一个温暖、专业的女声...',
+        textToSpeak: '待合成文本',
+        textPlaceholder: '输入这个说话者要说的话...',
+        language: '语言',
+        autoDetect: '自动检测',
+        langChinese: '中文',
+        langEnglish: '英语',
+        langJapanese: '日语',
+        langKorean: '韩语',
+        langGerman: '德语',
+        langFrench: '法语',
+        langRussian: '俄语',
+        langPortuguese: '葡萄牙语',
+        langSpanish: '西班牙语',
+        langItalian: '意大利语',
+        speed: '语速',
+        genTime: '生成时间',
+        duration: '总时长',
+        conversationAudio: '对话音频',
+        timelineClickSegment: '点击片段跳转到该说话者'
     }
 };
 
@@ -1337,7 +1475,15 @@ const state = {
     recordedAudioBase64: null,
     selectedPromptId: null,
     streamingMode: false,
-    lastGeneratedAudio: { cv: null, vd: null }
+    lastGeneratedAudio: { cv: null, vd: null },
+    // Conversation TTS state
+    conversationSpeakers: [
+        { id: 1, text: 'Hello! Welcome to our conversation demo.', instruct: 'A warm, friendly male voice with a casual tone', language: 'English' },
+        { id: 2, text: 'Hi there! This is amazing technology.', instruct: 'A cheerful, energetic female voice with enthusiasm', language: 'English' }
+    ],
+    maxSpeakers: 5,
+    minSpeakers: 2,
+    lastGeneratedConversation: null
 };
 
 /**
@@ -1804,6 +1950,380 @@ async function generateVoiceDesign() {
         btn.disabled = false;
 
     }
+}
+
+/**
+ * Conversation TTS - Render Speaker Cards
+ */
+function renderConversationSpeakers() {
+    const container = document.getElementById('conv-speakers-container');
+    if (!container) return;
+
+    // Save current input values back to state before re-rendering
+    const existingCards = container.querySelectorAll('.conversation-speaker-card');
+    existingCards.forEach((card, index) => {
+        if (state.conversationSpeakers[index]) {
+            const instructEl = card.querySelector('.speaker-instruct');
+            const textEl = card.querySelector('.speaker-text');
+            const languageEl = card.querySelector('.speaker-language');
+
+            if (instructEl) state.conversationSpeakers[index].instruct = instructEl.value;
+            if (textEl) state.conversationSpeakers[index].text = textEl.value;
+            if (languageEl) state.conversationSpeakers[index].language = languageEl.value;
+        }
+    });
+
+    container.innerHTML = '';
+
+    state.conversationSpeakers.forEach((speaker, index) => {
+        const card = document.createElement('div');
+        card.className = 'conversation-speaker-card';
+        card.dataset.speakerIndex = index;
+        card.innerHTML = `
+            <div class="speaker-card-header">
+                <span class="speaker-number">${t('speakerNumber')} ${index + 1}</span>
+                <button class="btn-remove-speaker" data-speaker-index="${index}" title="Remove speaker">×</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">${t('voiceDescription')}</label>
+                <textarea class="speaker-instruct form-textarea"
+                    data-i18n-placeholder="voiceDescInstructPlaceholder"
+                    placeholder="${t('voiceDescInstructPlaceholder')}"
+                    rows="2">${speaker.instruct}</textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">${t('textToSpeak')}</label>
+                <textarea class="speaker-text form-textarea"
+                    data-i18n-placeholder="textPlaceholder"
+                    placeholder="${t('textPlaceholder')}"
+                    rows="3">${speaker.text}</textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">${t('language')}</label>
+                <select class="speaker-language form-select">
+                    <option value="Auto" ${speaker.language === 'Auto' ? 'selected' : ''}>${t('autoDetect')}</option>
+                    <option value="Chinese" ${speaker.language === 'Chinese' ? 'selected' : ''}>${t('langChinese')}</option>
+                    <option value="English" ${speaker.language === 'English' ? 'selected' : ''}>${t('langEnglish')}</option>
+                    <option value="Japanese" ${speaker.language === 'Japanese' ? 'selected' : ''}>${t('langJapanese')}</option>
+                    <option value="Korean" ${speaker.language === 'Korean' ? 'selected' : ''}>${t('langKorean')}</option>
+                    <option value="German" ${speaker.language === 'German' ? 'selected' : ''}>${t('langGerman')}</option>
+                    <option value="French" ${speaker.language === 'French' ? 'selected' : ''}>${t('langFrench')}</option>
+                    <option value="Russian" ${speaker.language === 'Russian' ? 'selected' : ''}>${t('langRussian')}</option>
+                    <option value="Portuguese" ${speaker.language === 'Portuguese' ? 'selected' : ''}>${t('langPortuguese')}</option>
+                    <option value="Spanish" ${speaker.language === 'Spanish' ? 'selected' : ''}>${t('langSpanish')}</option>
+                    <option value="Italian" ${speaker.language === 'Italian' ? 'selected' : ''}>${t('langItalian')}</option>
+                </select>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+
+    // Update add button counter
+    const count = state.conversationSpeakers.length;
+    const btn = document.getElementById('conv-add-speaker-btn');
+    if (btn) {
+        btn.textContent = `+ ${t('addSpeakerBtn')} (${count}/${state.maxSpeakers})`;
+        btn.disabled = count >= state.maxSpeakers;
+    }
+
+    // Show/hide remove buttons based on count
+    const removeButtons = container.querySelectorAll('.btn-remove-speaker');
+    removeButtons.forEach(btn => {
+        btn.style.display = count <= state.minSpeakers ? 'none' : 'block';
+    });
+}
+
+/**
+ * Add Conversation Speaker
+ */
+function addConversationSpeaker() {
+    if (state.conversationSpeakers.length >= state.maxSpeakers) {
+        showToast('Maximum 5 speakers allowed', 'warning');
+        return;
+    }
+
+    const newId = state.conversationSpeakers.length > 0
+        ? Math.max(...state.conversationSpeakers.map(s => s.id)) + 1
+        : 1;
+
+    state.conversationSpeakers.push({
+        id: newId,
+        text: '',
+        instruct: '',
+        language: 'English'
+    });
+    renderConversationSpeakers();
+}
+
+/**
+ * Remove Conversation Speaker
+ */
+function removeConversationSpeaker(index) {
+    if (state.conversationSpeakers.length <= state.minSpeakers) {
+        showToast('At least 2 speakers required', 'warning');
+        return;
+    }
+
+    state.conversationSpeakers.splice(index, 1);
+    renderConversationSpeakers();
+}
+
+/**
+ * Generate Conversation
+ */
+async function generateConversation() {
+    // Collect speaker data from DOM
+    const container = document.getElementById('conv-speakers-container');
+    const speakerCards = container.querySelectorAll('.conversation-speaker-card');
+
+    const speakers = [];
+    let hasError = false;
+
+    speakerCards.forEach(card => {
+        const instruct = card.querySelector('.speaker-instruct').value.trim();
+        const text = card.querySelector('.speaker-text').value.trim();
+        const language = card.querySelector('.speaker-language').value;
+
+        if (!instruct || !text) {
+            hasError = true;
+        }
+
+        speakers.push({ instruct, text, language });
+    });
+
+    if (hasError) {
+        showToast('Please fill in all speaker fields', 'warning');
+        return;
+    }
+
+    if (speakers.length < state.minSpeakers) {
+        showToast('At least 2 speakers required', 'warning');
+        return;
+    }
+
+    const speed = parseFloat(document.getElementById('conv-speed').value);
+    const btn = document.getElementById('conv-generate-btn');
+
+    btn.classList.add('loading');
+    btn.disabled = true;
+
+    try {
+        const startTime = performance.now();
+
+        const response = await fetch(CONFIG.endpoints.conversation.generate, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({
+                speakers,
+                speed,
+                response_format: 'base64'
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Generation failed');
+        }
+
+        const data = await response.json();
+        const genTime = (performance.now() - startTime) / 1000;
+
+        // Store for later use
+        state.lastGeneratedConversation = data;
+
+        // Render timeline and play audio
+        renderConversationTimeline(data);
+        playConversationAudio(data, genTime);
+
+        showToast('Conversation generated successfully!', 'success');
+
+    } catch (error) {
+        showToast(error.message, 'error');
+    } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+    }
+}
+
+/**
+ * Render Conversation Timeline
+ */
+function renderConversationTimeline(data) {
+    const timeline = document.getElementById('conv-timeline');
+    if (!timeline) return;
+
+    timeline.innerHTML = '';
+
+    data.segments.forEach((segment, index) => {
+        const segmentEl = document.createElement('div');
+        segmentEl.className = 'timeline-segment';
+        segmentEl.dataset.segmentIndex = index;
+        segmentEl.textContent = `Speaker ${index + 1} (${segment.duration.toFixed(1)}s)`;
+        segmentEl.title = t('timelineClickSegment');
+        timeline.appendChild(segmentEl);
+    });
+}
+
+/**
+ * Play Conversation Audio - Concatenate all segments and play
+ */
+function playConversationAudio(data, genTime) {
+    const audioPlayer = document.getElementById('conv-audio-player');
+    const audioContainer = document.getElementById('conv-audio-container');
+    const metricsContainer = document.getElementById('conv-metrics');
+
+    if (!audioPlayer || !audioContainer) return;
+
+    // Show audio container
+    audioContainer.classList.add('visible');
+
+    // Concatenate all audio segments into one base64 string
+    // For now, we'll just play the first segment and store all for potential future concat
+    // A proper implementation would concatenate the PCM data
+
+    const segments = data.segments;
+    let concatenatedAudio = null;
+
+    if (segments.length === 1) {
+        // Single segment - just use it directly
+        concatenatedAudio = segments[0].audio;
+    } else {
+        // Multiple segments - need to concatenate PCM data
+        try {
+            // Decode all base64 segments to PCM
+            const pcmChunks = [];
+            let sampleRate = 24000;
+
+            segments.forEach(segment => {
+                const wavBytes = atob(segment.audio);
+                const wavBuffer = new Uint8Array(wavBytes.length);
+                for (let i = 0; i < wavBytes.length; i++) {
+                    wavBuffer[i] = wavBytes.charCodeAt(i);
+                }
+
+                // Parse WAV header to get sample rate and skip header
+                // WAV header is 44 bytes
+                const audioStart = 44;
+                pcmChunks.push(wavBuffer.slice(audioStart));
+            });
+
+            // Concatenate all PCM chunks
+            const totalLength = pcmChunks.reduce((sum, chunk) => sum + chunk.length, 0);
+            const concatenated = new Uint8Array(totalLength);
+            let offset = 0;
+            pcmChunks.forEach(chunk => {
+                concatenated.set(chunk, offset);
+                offset += chunk.length;
+            });
+
+            // Create a new WAV file with concatenated PCM
+            // WAV header (44 bytes)
+            const wavHeader = new Uint8Array(44);
+            const view = new DataView(wavHeader.buffer);
+
+            // RIFF chunk descriptor
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + totalLength, true);
+            writeString(view, 8, 'WAVE');
+            // fmt sub-chunk
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true); // Subchunk1Size
+            view.setUint16(20, 1, true); // AudioFormat (PCM)
+            view.setUint16(22, 1, true); // NumChannels (mono)
+            view.setUint32(24, sampleRate, true); // SampleRate
+            view.setUint32(28, sampleRate * 2, true); // ByteRate
+            view.setUint16(32, 2, true); // BlockAlign
+            view.setUint16(34, 16, true); // BitsPerSample
+            // data sub-chunk
+            writeString(view, 36, 'data');
+            view.setUint32(40, totalLength, true);
+
+            // Combine header and PCM data
+            const fullWav = new Uint8Array(44 + totalLength);
+            fullWav.set(wavHeader, 0);
+            fullWav.set(concatenated, 44);
+
+            // Convert to base64
+            let binary = '';
+            for (let i = 0; i < fullWav.length; i++) {
+                binary += String.fromCharCode(fullWav[i]);
+            }
+            concatenatedAudio = btoa(binary);
+        } catch (e) {
+            console.error('Error concatenating audio:', e);
+            // Fallback to just the first segment
+            concatenatedAudio = segments[0].audio;
+        }
+    }
+
+    // Set audio source
+    audioPlayer.src = `data:audio/wav;base64,${concatenatedAudio}`;
+    audioPlayer.play();
+
+    // Update metrics
+    metricsContainer.style.display = 'flex';
+    document.getElementById('conv-metric-time').textContent = `${genTime.toFixed(2)}s`;
+    document.getElementById('conv-metric-duration').textContent = `${data.total_duration.toFixed(2)}s`;
+
+    // Handle timeline highlighting
+    setupConversationTimelineHighlighting(audioPlayer, data.segments);
+}
+
+/**
+ * Helper function to write string to DataView
+ */
+function writeString(view, offset, string) {
+    for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+    }
+}
+
+/**
+ * Setup Conversation Timeline Highlighting
+ */
+function setupConversationTimelineHighlighting(audioPlayer, segments) {
+    const timelineSegments = document.querySelectorAll('.timeline-segment');
+
+    // Calculate cumulative durations
+    const segmentEndTimes = [];
+    let cumulativeTime = 0;
+    segments.forEach(segment => {
+        cumulativeTime += segment.duration;
+        segmentEndTimes.push(cumulativeTime);
+    });
+
+    audioPlayer.addEventListener('timeupdate', () => {
+        const currentTime = audioPlayer.currentTime;
+
+        // Find current segment
+        let currentSegmentIndex = -1;
+        for (let i = 0; i < segmentEndTimes.length; i++) {
+            if (currentTime < segmentEndTimes[i]) {
+                currentSegmentIndex = i;
+                break;
+            }
+        }
+        if (currentSegmentIndex === -1) {
+            currentSegmentIndex = segmentEndTimes.length - 1;
+        }
+
+        // Update highlighting
+        timelineSegments.forEach((el, index) => {
+            el.classList.toggle('playing', index === currentSegmentIndex);
+        });
+    });
+
+    // Allow clicking timeline segments to jump
+    timelineSegments.forEach((el, index) => {
+        el.addEventListener('click', () => {
+            let startTime = 0;
+            for (let i = 0; i < index; i++) {
+                startTime += segments[i].duration;
+            }
+            audioPlayer.currentTime = startTime;
+            audioPlayer.play();
+        });
+    });
 }
 
 /**
@@ -2746,6 +3266,43 @@ function initButtons() {
     document.getElementById('clear-cache').onclick = clearCache;
 }
 
+/**
+ * Initialize Conversation Tab
+ */
+function initConversationTab() {
+    // Add speaker button
+    const addSpeakerBtn = document.getElementById('conv-add-speaker-btn');
+    if (addSpeakerBtn) {
+        addSpeakerBtn.onclick = addConversationSpeaker;
+    }
+
+    // Generate button
+    const generateBtn = document.getElementById('conv-generate-btn');
+    if (generateBtn) {
+        generateBtn.onclick = generateConversation;
+    }
+
+    // Speed slider value display
+    const speedSlider = document.getElementById('conv-speed');
+    const speedValue = document.getElementById('conv-speed-value');
+    if (speedSlider && speedValue) {
+        speedSlider.oninput = () => {
+            speedValue.textContent = `${parseFloat(speedSlider.value).toFixed(1)}x`;
+        };
+    }
+
+    // Delegate remove speaker button clicks
+    const container = document.getElementById('conv-speakers-container');
+    if (container) {
+        container.addEventListener('click', (e) => {
+            if (e.target.classList.contains('btn-remove-speaker')) {
+                const index = parseInt(e.target.dataset.speakerIndex, 10);
+                removeConversationSpeaker(index);
+            }
+        });
+    }
+}
+
 // ============================================
 // API DOCS PANEL
 // ============================================
@@ -3141,9 +3698,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initApiKey();
     initButtons();
     initApiDocsPanel();
+    initConversationTab();
 
     // Render components
     renderSpeakerGrid();
+    renderConversationSpeakers();
     initSavedPromptsDropdown();
     fetchSavedPrompts();
 
