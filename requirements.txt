@@ -1,3 +1,4 @@
+emoji==2.14.1
 anyio==4.12.1
 audioop-lts==0.2.2
 audioread==3.1.0

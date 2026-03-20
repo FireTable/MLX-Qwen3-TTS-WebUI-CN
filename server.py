@@ -24,8 +24,19 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, StreamingResponse
 import re
 import json as json_module
+import mistune
 from pydantic import BaseModel, Field
 import numpy as np
+
+# Chunk splitting logic: "markdown" (structure-aware) or "sentence" (simple split)
+SPLIT_CHUNK_LOGIC = "markdown"
+
+import emoji
+
+def _strip_emoji(text: str) -> str:
+    """Remove all emoji characters from text using emoji library."""
+    return emoji.replace_emoji(text, '')
+
 
 try:
     import mlx.core as mx
@@ -296,6 +307,18 @@ def generate_with_temp_dir(model, **kwargs):
 
 def chunk_text(text: str, max_chunk_size: int = 500) -> List[str]:
     """
+    Split text into chunks.
+    Uses markdown-aware splitting (structure-preserving) or sentence-based splitting
+    depending on SPLIT_CHUNK_LOGIC constant.
+    """
+    if SPLIT_CHUNK_LOGIC == "markdown":
+        return _chunk_text_markdown(text, max_chunk_size)
+    else:
+        return _chunk_text_sentence(text, max_chunk_size)
+
+
+def _chunk_text_sentence(text: str, max_chunk_size: int = 500) -> List[str]:
+    """
     Split text into chunks by sentences, keeping chunks under max_chunk_size.
     Tries to maintain natural sentence boundaries for better TTS quality.
     """
@@ -340,6 +363,249 @@ def chunk_text(text: str, max_chunk_size: int = 500) -> List[str]:
             text = text[split_pos:].strip()
 
     return chunks
+
+
+# =============================================================================
+# Markdown-aware chunking functions (for SPLIT_CHUNK_LOGIC = "markdown")
+# =============================================================================
+
+def _is_media_url(text: str) -> bool:
+    """Check if text is a media URL (video/audio/image)."""
+    media_extensions = ('.mp4', '.mp3', '.wav', '.mov', '.avi', '.mkv', '.webm', '.m4a', '.flac', '.ogg', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg')
+    text_lower = text.lower()
+    return (
+        text_lower.startswith('http://') or text_lower.startswith('https://') or text_lower.startswith('www.')
+    ) and any(text_lower.endswith(ext) for ext in media_extensions)
+
+
+def _extract_text_from_node(node: dict) -> str:
+    """Recursively extract text from a markdown AST node (mistune 3.x format)."""
+    node_type = node.get('type', '')
+
+    if node_type == 'text':
+        raw = node.get('raw', '')
+        # Skip media URLs
+        if _is_media_url(raw):
+            return ''
+        return raw
+
+    # Newlines and blank lines are meaningful pauses in Qwen3-TTS
+    if node_type == 'blank_line':
+        return '\n\n'
+
+    if node_type == 'image':
+        return ''
+
+    if node_type in ('codespan', 'inline_code'):
+        return node.get('raw', '')
+
+    if node_type in ('code_block', 'fence'):
+        return ''
+
+    if node_type == 'link':
+        return ''.join(_extract_text_from_node(c) for c in node.get('children', []) if isinstance(c, dict))
+
+    if node_type in ('strong', 'em'):
+        return ''.join(_extract_text_from_node(c) for c in node.get('children', []) if isinstance(c, dict))
+
+    if node_type == 'block_text':
+        return ''.join(_extract_text_from_node(c) for c in node.get('children', []) if isinstance(c, dict))
+
+    if node_type == 'list_item':
+        parts = []
+        for child in node.get('children', []):
+            if isinstance(child, dict):
+                t = _extract_text_from_node(child)
+                if t:
+                    parts.append(t)
+        return ''.join(parts)
+
+    # Skip tables
+    if node_type in ('table', 'table_head', 'table_body', 'table_row', 'table_cell'):
+        return ''
+
+    # Extract text from children
+    text = ''
+    for child in node.get('children', []):
+        if isinstance(child, dict):
+            text += _extract_text_from_node(child)
+
+    # Detect table rows by pipe separator pattern
+    if text and '|' in text:
+        stripped = text.strip()
+        if stripped.startswith('|') or '|' in stripped.split('\n')[0]:
+            return ''
+
+    return text
+
+
+def _extract_list_text(node: dict) -> str:
+    """Extract list preserving markdown format for TTS."""
+    is_ordered = node.get('attrs', {}).get('ordered', False)
+    items = []
+    index = 1
+
+    for child in node.get('children', []):
+        if isinstance(child, dict) and child.get('type') == 'list_item':
+            item_text = _extract_text_from_node(child).strip()
+            if item_text:
+                if is_ordered:
+                    items.append(f'{index}. {item_text}')
+                    index += 1
+                else:
+                    items.append(f'- {item_text}')
+
+    if items:
+        return '\n'.join(items) + '\n\n'
+    return ''
+
+
+def _is_metadata_line(line: str) -> bool:
+    """Check if a line looks like YAML metadata (key: value)."""
+    stripped = line.strip()
+    if not stripped:
+        return False
+    return bool(re.match(r'^[a-zA-Z_][a-zA-Z0-9_-]*:\s*\S', stripped))
+
+
+def _strip_metadata_lines(text: str) -> str:
+    """Strip YAML-like metadata lines that appear after the first heading."""
+    lines = text.split('\n')
+
+    first_h1_idx = -1
+    for i, line in enumerate(lines):
+        if line.startswith('# '):
+            first_h1_idx = i
+            break
+
+    if first_h1_idx == -1:
+        return text
+
+    skip_count = 0
+    for i in range(first_h1_idx + 1, len(lines)):
+        line = lines[i].strip()
+        if not line or _is_metadata_line(line):
+            skip_count = i - first_h1_idx
+        else:
+            break
+
+    if skip_count > 0:
+        lines = lines[:first_h1_idx + 1] + lines[first_h1_idx + skip_count:]
+
+    return '\n'.join(lines)
+
+
+def _smart_chunk(text: str, max_size: int) -> List[str]:
+    """Smart chunking: split at sentence boundaries when text exceeds max_size."""
+    if len(text) <= max_size:
+        return [text]
+
+    sentence_pattern = r'(?<=[。！？.!?])\s+'
+    sentences = re.split(sentence_pattern, text)
+
+    chunks = []
+    current = ""
+
+    for s in sentences:
+        if current and len(current) + len(s) + 1 > max_size:
+            chunks.append(current.strip())
+            current = s
+        else:
+            current = (current + " " + s).strip() if current else s
+
+    if current and len(current) > max_size:
+        parts = re.split(r'，', current)
+        current = ""
+        for p in parts:
+            if current and len(current) + len(p) + 1 > max_size:
+                chunks.append(current.strip())
+                current = p
+            else:
+                current = (current + "，" + p).strip() if current else p
+
+    if current.strip():
+        chunks.append(current.strip())
+
+    return chunks
+
+
+def _chunk_text_markdown(text: str, max_chunk_size: int = 500) -> List[str]:
+    """Convert Markdown to TTS-friendly text chunks using mistune AST."""
+    # Remove emoji first (before any processing)
+    text = _strip_emoji(text)
+    text = _strip_metadata_lines(text)
+
+    plugins = ['table', 'strikethrough', 'superscript', 'subscript', 'footnotes', 'mark', 'insert']
+    md = mistune.create_markdown(renderer='ast', plugins=plugins)
+    ast = md(text)
+
+    chunks = []
+    current_chunk = ""
+
+    for index, node in enumerate(ast):
+        node_type = node.get('type', '')
+
+        # Blank lines become pauses (but don't stack)
+        if node_type == 'blank_line':
+            if not current_chunk.endswith('\n\n'):
+                current_chunk += '\n\n'
+            continue
+
+        # Heading: section boundary, preserve markdown syntax
+        if node_type == 'heading':
+            level = node.get('attrs', {}).get('level', 0)
+            heading_text = _extract_text_from_node(node).strip()
+
+            if level >= 3:
+                if heading_text:
+                    current_chunk = (current_chunk + " " + heading_text).strip()
+                continue
+
+            if current_chunk.strip():
+                sub_chunks = _smart_chunk(current_chunk, max_chunk_size)
+                chunks.extend(sub_chunks)
+                current_chunk = ""
+
+            current_chunk = f"{'#' * level} {heading_text}"
+            continue
+
+        # List: merge items
+        if node_type == 'list':
+            list_text = _extract_list_text(node)
+            if list_text:
+                if current_chunk and len(current_chunk) + len(list_text) + 1 > max_chunk_size:
+                    sub_chunks = _smart_chunk(current_chunk, max_chunk_size)
+                    chunks.extend(sub_chunks)
+                    current_chunk = list_text.lstrip() if list_text.startswith('\n\n') else list_text
+                else:
+                    if not current_chunk:
+                        current_chunk = list_text.lstrip()
+                    elif current_chunk.endswith('\n\n') or current_chunk.endswith('\n'):
+                        current_chunk = current_chunk + list_text
+                    elif current_chunk.endswith('：') or current_chunk.endswith(':'):
+                        current_chunk = current_chunk + list_text
+                    else:
+                        current_chunk = current_chunk + " " + list_text
+            continue
+
+        content_text = _extract_text_from_node(node).strip()
+        if not content_text:
+            continue
+
+        if current_chunk.endswith('\n\n'):
+            current_chunk += content_text
+        elif current_chunk and len(current_chunk) + len(content_text) + 1 > max_chunk_size:
+            sub_chunks = _smart_chunk(current_chunk, max_chunk_size)
+            chunks.extend(sub_chunks)
+            current_chunk = content_text
+        else:
+            current_chunk = (current_chunk + " " + content_text).strip() if current_chunk else content_text
+
+    if current_chunk.strip():
+        sub_chunks = _smart_chunk(current_chunk, max_chunk_size)
+        chunks.extend(sub_chunks)
+
+    return [c.strip() for c in chunks if c.strip()]
 
 
 @asynccontextmanager
