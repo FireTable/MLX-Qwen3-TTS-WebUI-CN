@@ -50,6 +50,7 @@ VOICES_DIR = BASE_DIR / "voices"
 OUTPUTS_DIR = BASE_DIR / "outputs"
 STATIC_DIR = BASE_DIR / "static"
 SAMPLE_RATE = 24000
+MAX_TOKENS = 8192  # Maximum tokens per TTS generation (~11 min audio), adjust based on hardware
 
 
 def ensure_wav_bytes(audio_bytes: bytes) -> bytes:
@@ -274,6 +275,7 @@ def generate_with_temp_dir(model, **kwargs):
     os.makedirs(temp_dir, exist_ok=True)
 
     try:
+        kwargs.setdefault('max_tokens', MAX_TOKENS)
         generate_audio(model=model, output_path=temp_dir, **kwargs)
 
         # Read the generated audio
@@ -298,7 +300,7 @@ def chunk_text(text: str, max_chunk_size: int = 500) -> List[str]:
     Tries to maintain natural sentence boundaries for better TTS quality.
     """
     # Split by sentence-ending punctuation
-    sentence_pattern = r'(?<=[.!?])\s+'
+    sentence_pattern = r'(?<=[.!?。！？])\s+'
     sentences = re.split(sentence_pattern, text.strip())
 
     chunks = []
