@@ -300,7 +300,7 @@ def chunk_text(text: str, max_chunk_size: int = 500) -> List[str]:
     Tries to maintain natural sentence boundaries for better TTS quality.
     """
     # Split by sentence-ending punctuation
-    sentence_pattern = r'(?<=[.!?。！？])\s+'
+    sentence_pattern = r'(?<=[。！？])\s+'
     sentences = re.split(sentence_pattern, text.strip())
 
     chunks = []
