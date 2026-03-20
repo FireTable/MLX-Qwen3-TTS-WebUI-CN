@@ -2,7 +2,7 @@
 
 基于 Apple MLX 框架的多模态文本转语音（TTS）合成工作区。支持自定义语音、语音设计、语音克隆和**多人对话**四种模式。
 
-Forked from [Blizaine qwen3-tts-apple-silicon](https://github.com/Blizaine/qwen3-tts-apple-silicon/tree/main) I didn't fork it at first and did git clone the testing locally, so I just went along with it.
+Forked from [szkane/MLX-Qwen3-TTS-WebUI-CN](https://github.com/szkane/MLX-Qwen3-TTS-WebUI-CN)
 
 ![screenshot](screenshot_1.5x_postspark_En.png)
 
@@ -12,6 +12,20 @@ Forked from [Blizaine qwen3-tts-apple-silicon](https://github.com/Blizaine/qwen3
 
 - **操作系统**: macOS only (Apple Silicon M1/M2/M3/M4)
 - **环境**: Conda 环境 `mlx`
+
+## Markdown 感知分块（Streaming 模式）
+
+当使用流式 API 时，长文本会自动分块处理以保持语音一致性：
+
+- **Markdown 结构保留**: 标题（`#` `##`）、列表（`-` `1.`）、空白行会被保留
+- **Emoji 移除**: 文本中的 emoji 会被自动移除
+- **媒体链接跳过**: 图片、视频、音频 URL 不会被朗读
+- **表格跳过**: Markdown 表格内容不会被朗读
+- **元数据过滤**: Notion 导出的元数据行会被自动过滤
+
+可通过 `SPLIT_CHUNK_LOGIC` 常量切换分块模式：
+- `"markdown"` (默认): 结构感知分块
+- `"sentence"`: 简单按句子分块
 
 ## 快速开始
 

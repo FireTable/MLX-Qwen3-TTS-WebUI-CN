@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 conda activate mlx
 
 # Install dependencies
-pip install -U mlx-audio soundfile numpy argparse gradio fastapi uvicorn
+pip install -U mlx-audio soundfile numpy argparse gradio fastapi uvicorn emoji
 
 # Download models (one-time)
 python test/hg-download.py
@@ -31,6 +31,20 @@ python test/qwen3tts.py -m custom      # Custom speaker + emotion instruction
 python test/qwen3tts.py -m design      # Voice design from text description
 python test/chatterbox.py              # Storytelling with emotion tags
 ```
+
+## Markdown-Aware Chunking (Streaming Mode)
+
+When using streaming APIs, long text is automatically chunked for voice consistency:
+
+- **Markdown Structure Preserved**: Headings (`#` `##`), lists (`-` `1.`), blank lines are preserved
+- **Emoji Removal**: Emojis in text are automatically removed
+- **Media URL Skip**: Image, video, audio URLs are not read aloud
+- **Table Skip**: Markdown table content is not read aloud
+- **Metadata Filter**: Notion export metadata lines are automatically filtered
+
+Chunking mode can be switched via `SPLIT_CHUNK_LOGIC` constant:
+- `"markdown"` (default): Structure-aware chunking
+- `"sentence"`: Simple sentence-based chunking
 
 ## Architecture
 
@@ -253,6 +267,7 @@ mlx_test/
 - `soundfile` - WAV I/O
 - `numpy` - Audio array handling
 - `huggingface_hub` - Model downloads
+- `emoji` - Emoji removal for TTS text preprocessing
 
 ### Web UI (Gradio)
 
@@ -279,6 +294,8 @@ mlx_test/
 - **Environment**: Conda environment `mlx` required
 
 ## Git Configuration
+
+**Forked from**: [szkane/MLX-Qwen3-TTS-WebUI-CN](https://github.com/szkane/MLX-Qwen3-TTS-WebUI-CN)
 
 A `.gitignore` file is included to exclude:
 
